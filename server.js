@@ -7,7 +7,20 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-app.use(cors());
+// app.use(cors());
+
+
+const allowedOrigins = [
+  'https://3xbooks.com/', // your frontend domain on Hostinger
+  'https://exbooks.onrender.com' // Render backend domain
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
 app.use(bodyParser.json());
 
 // ✅ Contact form endpoint (instant response)
@@ -91,7 +104,8 @@ app.post('/api/newsletter', (req, res) => {
 
 
 // MongoDB connection
-const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/3xbooks';
+const mongoUri = process.env.MONGO_URI;
+
 mongoose.connect(mongoUri, { dbName: '3xBooks', useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('✅ MongoDB connected'))
     .catch(err => console.error('❌ MongoDB connection error:', err));
@@ -104,13 +118,13 @@ app.use('/api/categories', require('./routes/categories'));
 app.use('/api/series', require('./routes/series'));
 
 // ✅ Serve React frontend build (important part)
-const frontendPath = path.join(__dirname, '../frontend/build');
-app.use(express.static(frontendPath));
+// const frontendPath = path.join(__dirname, '../frontend/build');
+// app.use(express.static(frontendPath));
 
-// Handle React routing, return index.html for all other routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
-});
+// // Handle React routing, return index.html for all other routes
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(frontendPath, 'index.html'));
+// });
 
 
 
