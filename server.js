@@ -11,16 +11,25 @@ const app = express();
 
 
 const allowedOrigins = [
-  'https://3xbooks.com/',
-  'http://192.168.20.193:3000', // your frontend domain on Hostinger
-  'https://exbooks.onrender.com' // Render backend domain
+  'https://3xbooks.com',
+  'http://192.168.20.193:3000',
+  'https://exbooks.onrender.com'
 ];
 
 app.use(cors({
-  origin: allowedOrigins,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: function(origin, callback){
+    // allow requests with no origin (like mobile apps, Postman)
+    if(!origin) return callback(null, true);
+    if(allowedOrigins.indexOf(origin) === -1){
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  methods: ['GET','POST','PUT','DELETE'],
   credentials: true
 }));
+
 
 app.use(bodyParser.json());
 
