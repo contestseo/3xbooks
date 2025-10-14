@@ -11,7 +11,8 @@ const app = express();
 
 
 const allowedOrigins = [
-  'https://3xbooks.com/', // your frontend domain on Hostinger
+  'https://3xbooks.com/',
+  'http://192.168.20.193:3000', // your frontend domain on Hostinger
   'https://exbooks.onrender.com' // Render backend domain
 ];
 
