@@ -32,4 +32,18 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+// GET /authors/:name - fetch author by name (spaces replaced by '-')
+// ⚡ 1️⃣ Route to get author by name (slug)
+router.get('/name/:name', async (req, res) => {
+  try {
+    const authorName = req.params.name.replace(/-/g, ' ');
+    const author = await Author.findOne({ name: { $regex: `^${authorName}$`, $options: 'i' } })
+      .populate('books');
+    if (!author) return res.status(404).json({ error: 'Author not found' });
+    res.json(author);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

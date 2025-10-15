@@ -1,18 +1,19 @@
 const mongoose = require('mongoose');
 
-const book3xSchema = new mongoose.Schema({
-  asin: { type: String, required: true, unique: true },
-  title: { type: String, required: true },
+const bookSchema = new mongoose.Schema({
+  asin: { type: String, unique: true },
+  title: String,
+  slug: { type: String, unique: true, index: true }, // ✅ new slug field
   authors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Author3x' }],
-  publisher: { type: String },
-  releaseDate: { type: Date },
   categories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category3x' }],
-  series: { type: mongoose.Schema.Types.ObjectId, ref: 'Series3x' },
-  seriesNumber: { type: Number },
-  affiliateLink: { type: String },
-  price: { type: String },
-  bookImage: { type: String },
-  description: { type: String }, // <-- Added description field
-});
+  affiliateLink: String,
+  price: String,
+  bookImage: String,
+  description: String,
+  publisher: String,
+  releaseDate: Date,
+  feedbackCount: Number,
+  feedbackRating: Number,
+}, { timestamps: true });
 
-module.exports = mongoose.model('Book3x', book3xSchema);
+module.exports = mongoose.model('Book3x', bookSchema);

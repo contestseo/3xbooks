@@ -125,6 +125,7 @@ app.use('/api/filter/books', require('./routes/books'));
 app.use('/api/books', require('./routes/books'));
 app.use('/api/authors', require('./routes/authors'));
 app.use('/api/categories', require('./routes/categories'));
+app.use('/api/category', require('./routes/categories'));
 app.use('/api/series', require('./routes/series'));
 
 // ✅ Serve React frontend build (important part)

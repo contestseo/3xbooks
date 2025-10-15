@@ -15,15 +15,30 @@ router.get('/', async (req, res) => {
     }
 });
 
-// GET /categories/:id - category detail
-router.get('/:id', async (req, res) => {
-    try {
-        const category = await Category.findById(req.params.id);
-        if (!category) return res.status(404).json({ error: 'Category not found' });
-        res.json(category);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+
+// GET /api/category/:name - search category by name
+router.get('/:name', async (req, res) => {
+  try {
+    let { name } = req.params;
+
+    // Convert hyphens to spaces for proper matching
+    name = name.replace(/-/g, ' ');
+
+    // Case-insensitive search for category name
+    const categories = await Category.find({
+      name: { $regex: `^${name}$`, $options: 'i' } // exact match ignoring case
+    }).limit(20);
+
+    if (!categories.length) {
+      return res.status(404).json({ error: 'Category not found' });
     }
+
+    res.json(categories);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
+
 
 module.exports = router;
