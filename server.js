@@ -12,6 +12,7 @@ const app = express();
 
 const allowedOrigins = [
   'https://3xbooks.com',
+  'http://localhost:3000',
   'http://192.168.20.186:3000/',
   'https://exbooks.onrender.com'
 ];
