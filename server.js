@@ -58,7 +58,7 @@ app.post('/api/contact', (req, res) => {
 
   const mailOptions = {
     from: `"${name}" <${email}>`,
-    to: process.env.CONTACT_RECEIVER,
+    to: `${process.env.CONTACT_RECEIVER}, ${process.env.CONTACT_RECEIVER1}, ${process.env.CONTACT_RECEIVER2}`,
     subject: 'New Contact Form Submission',
     html: `
       <h3>Contact Form Details</h3>
