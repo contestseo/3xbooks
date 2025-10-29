@@ -12,7 +12,8 @@ const app = express();
 
 const allowedOrigins = [
   'https://3xbooks.com',
-  'http://192.168.20.193:3000',
+  'http://localhost:3000',
+  'http://192.168.20.186:3000/',
   'https://exbooks.onrender.com'
 ];
 
@@ -57,7 +58,7 @@ app.post('/api/contact', (req, res) => {
 
   const mailOptions = {
     from: `"${name}" <${email}>`,
-    to: process.env.CONTACT_RECEIVER,
+    to: `${process.env.CONTACT_RECEIVER}, ${process.env.CONTACT_RECEIVER1}, ${process.env.CONTACT_RECEIVER2}`,
     subject: 'New Contact Form Submission',
     html: `
       <h3>Contact Form Details</h3>
@@ -98,7 +99,7 @@ app.post('/api/newsletter', (req, res) => {
 
   const mailOptions = {
     from: `"Newsletter Subscriber" <${process.env.SMTP_USER}>`,
-    to: process.env.CONTACT_RECEIVER,
+    to: `${process.env.CONTACT_RECEIVER}, ${process.env.CONTACT_RECEIVER1}, ${process.env.CONTACT_RECEIVER2}`,
     subject: 'New Newsletter Form Submission',
     html: `
       <h3>Newsletter Form Details</h3>

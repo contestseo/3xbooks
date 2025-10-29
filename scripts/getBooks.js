@@ -53,7 +53,7 @@ async function sendPaapiRequest(path, body, retries = 3) {
         const message = data?.Errors?.[0]?.Message || err.message;
 
         if (data?.__type?.includes("TooManyRequests") && retries > 0) {
-            const delay = 4000; // wait 4 seconds before retry
+            const delay = 60000; // wait 4 seconds before retry
             console.warn(`⚠️ Throttled by Amazon. Retrying in ${delay / 1000}s...`);
             await sleep(delay);
             return sendPaapiRequest(path, body, retries - 1);
@@ -214,7 +214,6 @@ async function saveBook(item, categoryId) {
             await authorDoc.save();
         }
     }
-
     console.log(`✅ Saved book: ${title} (${slug})`);
 }
 
@@ -229,19 +228,17 @@ async function main() {
     try {
         await mongoose.connect(MONGO_URI, { dbName: '3xBooks', useNewUrlParser: true, useUnifiedTopology: true });
         console.log('MongoDB connected');
-
         const categories = await Category3x.find();
-        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+        // const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
         for (const cat of categories) {
             console.log(`\nFetching books for category: ${cat.name}`);
-
-            for (const letter of letters) {
-                const keyword = `${cat.name} ${letter}`;
+            if(cat.name === "Motivational"){
+                // for (const letter of letters) {
+                const keyword = `${cat.name} B`;
                 const firstPage = await searchBooksByCategory(keyword, 1);
                 const totalCount = firstPage.TotalResultCount || 0;
                 const totalPages = Math.ceil(totalCount / 10);
-
                 for (let page = 1; page <= totalPages; page++) {
                     const searchResult = await searchBooksByCategory(keyword, page);
                     const items = searchResult.Items || [];
@@ -253,11 +250,10 @@ async function main() {
                         await sleep(1200); // API throttling
                     }
                 }
-            }
-
-            await updateCategoryBookCount(cat._id);
+            // }
+            await updateCategoryBookCount(cat._id);  
+            }           
         }
-
         console.log('✅ All books fetched and saved');
         await mongoose.disconnect();
     } catch (err) {
