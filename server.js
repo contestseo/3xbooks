@@ -7,23 +7,19 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-// app.use(cors());
 
-
+// ------------------ CORS ------------------
 const allowedOrigins = [
   'https://3xbooks.com',
   'http://localhost:3000',
-  'http://192.168.20.186:3000/',
   'https://exbooks.onrender.com'
 ];
 
 app.use(cors({
   origin: function(origin, callback){
-    // allow requests with no origin (like mobile apps, Postman)
-    if(!origin) return callback(null, true);
+    if(!origin) return callback(null, true); // mobile apps, Postman
     if(allowedOrigins.indexOf(origin) === -1){
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+      return callback(new Error('CORS not allowed'), false);
     }
     return callback(null, true);
   },
@@ -31,99 +27,94 @@ app.use(cors({
   credentials: true
 }));
 
-
+// ------------------ Body Parser ------------------
 app.use(bodyParser.json());
 
-// ✅ Contact form endpoint (instant response)
-app.post('/api/contact', (req, res) => {
+// ------------------ Contact Form ------------------
+app.post('/api/contact', async (req, res) => {
   const { name, email, phone, subject, message } = req.body;
 
   if (!name || !phone || !email || !message) {
     return res.status(400).json({ error: 'Please fill all required fields' });
   }
 
-  // Respond immediately
-  res.status(200).json({ message: 'Email sent successfully' });
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT, 10), // 465 (SSL) or 587 (TLS)
+      secure: process.env.SMTP_PORT == 465,     // true for 465, false for 587
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
 
-  // Send email in the background
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT, 10),
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+    const mailOptions = {
+      from: `"Aspire Developer" <${process.env.SMTP_USER}>`,
+      to: `${process.env.CONTACT_RECEIVER},${process.env.CONTACT_RECEIVER1},${process.env.CONTACT_RECEIVER2}`,
+      subject: 'New Contact Form Submission',
+      html: `
+        <h3>Contact Form Details</h3>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Phone:</strong> ${phone}</p>
+        <p><strong>Subject:</strong> ${subject || 'N/A'}</p>
+        <p><strong>Message:</strong> ${message}</p>
+      `,
+    };
 
-  const mailOptions = {
-    from: `Aspire Developer`,
-    to: `${process.env.CONTACT_RECEIVER}, ${process.env.CONTACT_RECEIVER1}, ${process.env.CONTACT_RECEIVER2}`,
-    // to: `${process.env.CONTACT_RECEIVER}, ${process.env.CONTACT_RECEIVER2}`,
-    subject: 'New Contact Form Submission',
-    html: `
-      <h3>Contact Form Details</h3>
-      <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
-      <p><strong>Subject:</strong> ${subject || 'N/A'}</p>
-      <p><strong>Message:</strong> ${message}</p>
-    `,
-  };
+    await transporter.sendMail(mailOptions);
 
-  transporter.sendMail(mailOptions)
-    .then(() => console.log(`✅ Contact form email sent from ${email}`))
-    .catch(err => console.error('❌ Contact form email error:', err));
-});
+    console.log(`✅ Contact form email sent from ${email}`);
+    res.status(200).json({ message: 'Email sent successfully' });
 
-
-// ✅ Newsletter form endpoint (instant response)
-app.post('/api/newsletter', (req, res) => {
-  const { email } = req.body;
-
-  if (!email) {
-    return res.status(400).json({ error: 'Please fill all required fields' });
+  } catch (err) {
+    console.error('❌ Contact form email error:', err);
+    res.status(500).json({ error: 'Failed to send email' });
   }
-
-  // Respond immediately
-  res.status(200).json({ message: 'Email sent successfully' });
-
-  // Send email in background
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT, 10),
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-
-  const mailOptions = {
-    from: `"Newsletter Subscriber" <${process.env.SMTP_USER}>`,
-    to: `${process.env.CONTACT_RECEIVER}, ${process.env.CONTACT_RECEIVER1}, ${process.env.CONTACT_RECEIVER2}`,
-    subject: 'New Newsletter Form Submission',
-    html: `
-      <h3>Newsletter Form Details</h3>
-      <p><strong>Email:</strong> ${email}</p>
-    `,
-  };
-
-  transporter.sendMail(mailOptions)
-    .then(() => console.log(`✅ Newsletter email sent from ${email}`))
-    .catch(err => console.error('❌ Newsletter email error:', err));
 });
 
+// ------------------ Newsletter Form ------------------
+app.post('/api/newsletter', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email required' });
 
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT, 10),
+      secure: process.env.SMTP_PORT == 465,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
 
-// MongoDB connection
-const mongoUri = process.env.MONGO_URI;
+    const mailOptions = {
+      from: `"Newsletter Subscriber" <${process.env.SMTP_USER}>`,
+      to: `${process.env.CONTACT_RECEIVER},${process.env.CONTACT_RECEIVER1},${process.env.CONTACT_RECEIVER2}`,
+      subject: 'New Newsletter Form Submission',
+      html: `<p><strong>Email:</strong> ${email}</p>`,
+    };
 
-mongoose.connect(mongoUri, { dbName: '3xBooks', useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('✅ MongoDB connected'))
-    .catch(err => console.error('❌ MongoDB connection error:', err));
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Newsletter email sent from ${email}`);
+    res.status(200).json({ message: 'Email sent successfully' });
 
-// API Routes
+  } catch (err) {
+    console.error('❌ Newsletter email error:', err);
+    res.status(500).json({ error: 'Failed to send email' });
+  }
+});
+
+// ------------------ MongoDB ------------------
+mongoose.connect(process.env.MONGO_URI, {
+  dbName: '3xBooks', useNewUrlParser: true, useUnifiedTopology: true
+})
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
+
+// ------------------ API Routes ------------------
 app.use('/api/filter/books', require('./routes/books'));
 app.use('/api/books', require('./routes/books'));
 app.use('/api/authors', require('./routes/authors'));
@@ -131,18 +122,11 @@ app.use('/api/categories', require('./routes/categories'));
 app.use('/api/category', require('./routes/categories'));
 app.use('/api/series', require('./routes/series'));
 
-// ✅ Serve React frontend build (important part)
+// ------------------ Serve React Frontend ------------------
 // const frontendPath = path.join(__dirname, '../frontend/build');
 // app.use(express.static(frontendPath));
+// app.get('*', (req, res) => res.sendFile(path.join(frontendPath, 'index.html')));
 
-// // Handle React routing, return index.html for all other routes
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(frontendPath, 'index.html'));
-// });
-
-
-
-
-// Start server
+// ------------------ Start Server ------------------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
