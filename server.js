@@ -38,7 +38,7 @@ app.use(bodyParser.json());
 app.post('/api/contact', (req, res) => {
   const { name, email, phone, subject, message } = req.body;
 
-  if (!name || !email || !message) {
+  if (!name || !phone || !email || !message) {
     return res.status(400).json({ error: 'Please fill all required fields' });
   }
 
@@ -57,15 +57,17 @@ app.post('/api/contact', (req, res) => {
   });
 
   const mailOptions = {
-    from: `"${name}" <${email}>`,
+    from: `Aspire Developer`,
     to: `${process.env.CONTACT_RECEIVER}, ${process.env.CONTACT_RECEIVER1}, ${process.env.CONTACT_RECEIVER2}`,
+    // to: `${process.env.CONTACT_RECEIVER}, ${process.env.CONTACT_RECEIVER2}`,
     subject: 'New Contact Form Submission',
     html: `
       <h3>Contact Form Details</h3>
       <p><strong>Name:</strong> ${name}</p>
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
-      <p><strong>Message:</strong><br/> ${message}</p>
+      <p><strong>Subject:</strong> ${subject || 'N/A'}</p>
+      <p><strong>Message:</strong> ${message}</p>
     `,
   };
 
