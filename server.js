@@ -119,7 +119,7 @@ app.post('/api/newsletter', (req, res) => {
     to: `${process.env.CONTACT_RECEIVER}, ${process.env.CONTACT_RECEIVER1}, ${process.env.CONTACT_RECEIVER2}`,
     subject: 'New Newsletter Form Submission',
     html: `
-      <h3>Newsletter Form Details:</h3>
+      <h3>Newsletter Form Details</h3>
       <p><strong>Email:</strong> ${email}</p>
     `,
   };
