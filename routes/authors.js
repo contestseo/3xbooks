@@ -20,6 +20,7 @@ router.get('/', async (req, res) => {
     }
 });
 
+
 // GET /authors/:id - author detail with books
 router.get('/:id', async (req, res) => {
     try {

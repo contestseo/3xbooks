@@ -7,23 +7,19 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-// app.use(cors());
-
 
 const allowedOrigins = [
   'https://3xbooks.com',
   'http://localhost:3000',
-  'http://192.168.20.186:3000/',
+  'http://192.168.20.186:3000',
   'https://exbooks.onrender.com'
 ];
 
 app.use(cors({
   origin: function(origin, callback){
-    // allow requests with no origin (like mobile apps, Postman)
-    if(!origin) return callback(null, true);
-    if(allowedOrigins.indexOf(origin) === -1){
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    if (!origin) return callback(null, true);
+    if (!allowedOrigins.includes(origin)) {
+      return callback(new Error('Not allowed by CORS'), false);
     }
     return callback(null, true);
   },
@@ -31,8 +27,27 @@ app.use(cors({
   credentials: true
 }));
 
-
 app.use(bodyParser.json());
+
+// ✅ Required by Render to wake instance
+app.get("/", (req, res) => {
+  res.send("✅ Backend API running");
+});
+
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI, {
+  dbName: '3xBooks',
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log("✅ MongoDB connected"))
+.catch(err => console.log("❌ MongoDB connection failed:", err));
+
+app.use('/api/books', require('./routes/books'));
+app.use('/api/authors', require('./routes/authors'));
+app.use('/api/categories', require('./routes/categories'));
+app.use('/api/series', require('./routes/series'));
+
 
 // ✅ Contact form endpoint (instant response)
 app.post('/api/contact', (req, res) => {
@@ -113,35 +128,6 @@ app.post('/api/newsletter', (req, res) => {
     .then(() => console.log(`✅ Newsletter email sent from ${email}`))
     .catch(err => console.error('❌ Newsletter email error:', err));
 });
-
-
-
-// MongoDB connection
-const mongoUri = process.env.MONGO_URI;
-
-mongoose.connect(mongoUri, { dbName: '3xBooks', useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('✅ MongoDB connected'))
-    .catch(err => console.error('❌ MongoDB connection error:', err));
-
-// API Routes
-app.use('/api/filter/books', require('./routes/books'));
-app.use('/api/books', require('./routes/books'));
-app.use('/api/authors', require('./routes/authors'));
-app.use('/api/categories', require('./routes/categories'));
-app.use('/api/category', require('./routes/categories'));
-app.use('/api/series', require('./routes/series'));
-
-// ✅ Serve React frontend build (important part)
-// const frontendPath = path.join(__dirname, '../frontend/build');
-// app.use(express.static(frontendPath));
-
-// // Handle React routing, return index.html for all other routes
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(frontendPath, 'index.html'));
-// });
-
-
-
 
 // Start server
 const PORT = process.env.PORT || 5000;
