@@ -36,7 +36,7 @@ app.get("/", (req, res) => {
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
-  dbName: '3xBooks',
+  dbName: '3xBooksClone',
   useNewUrlParser: true,
   useUnifiedTopology: true
 })

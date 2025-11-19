@@ -20,6 +20,48 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get("/top", async (req, res) => {
+  try {
+    const topAuthors = await Book.aggregate([
+      {
+        $group: {
+          _id: "$authors", // or "$authorId" depending on your schema
+          bookCount: { $sum: 1 }
+        }
+      },
+      { $sort: { bookCount: -1 } },
+      { $limit: 10 }
+    ]);
+
+    res.json(topAuthors);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// GET /api/authors/book-count
+router.get("/book-count", async (req, res) => {
+  try {
+    const result = await Author.aggregate([
+      {
+        $project: {
+          name: 1,
+          image: 1,
+          bookCount: { $size: "$books" }
+        }
+      },
+      { $sort: { bookCount: -1 } }
+    ]);
+
+    res.json(result);
+  } catch (error) {
+    console.error("Book count error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
 
 // GET /authors/:id - author detail with books
 router.get('/:id', async (req, res) => {

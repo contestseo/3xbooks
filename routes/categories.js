@@ -5,9 +5,9 @@ const Category = require('../models/Category3x');
 // GET /categories - list categories
 router.get('/', async (req, res) => {
     try {
-        console.log('📦 Fetching categories...');
+        // console.log('📦 Fetching categories...');
         const categories = await Category.find();
-        console.log('✅ Categories found:', categories.length);
+        // console.log('✅ Categories found:', categories.length);
         res.json(categories);
     } catch (err) {
         console.error('❌ Error fetching categories:', err);

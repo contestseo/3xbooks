@@ -5,6 +5,7 @@ const Book = require('../models/Book3x');
 router.get('/', async (req, res) => {
   try {
     const { search, category, author, upcoming, limit = 20, skip = 0 } = req.query;
+    
     const query = {};
 
     if (search) {
@@ -39,6 +40,8 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
 
 
 /**
