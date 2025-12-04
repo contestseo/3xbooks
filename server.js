@@ -6,6 +6,10 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 
+// ==== SSR IMPORTS FOR GOOGLE SEO ====
+const chromium = require("chrome-aws-lambda");
+const puppeteer = require("puppeteer-core");
+
 const app = express();
 
 const allowedOrigins = [
@@ -29,12 +33,57 @@ app.use(cors({
 
 app.use(bodyParser.json());
 
-// ✅ Required by Render to wake instance
-app.get("/", (req, res) => {
-  res.send("✅ Backend API running");
+// ===== BOT DETECTION FUNCTION =====
+function isBot(ua = "") {
+  return /bot|googlebot|crawler|spider|robot|crawling|facebookexternalhit|twitterbot|bingbot/i.test(ua);
+}
+
+// ===== SSR: Render Page in Headless Chrome for Search Bots =====
+async function renderPage(url) {
+  const executablePath = await chromium.executablePath;
+
+  const browser = await puppeteer.launch({
+    executablePath,
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    headless: chromium.headless
+  });
+
+  const page = await browser.newPage();
+  await page.goto(url, { waitUntil: "networkidle0" });
+
+  const html = await page.content();
+  await browser.close();
+  return html;
+}
+
+// ===== SSR Middleware =====
+app.use(async (req, res, next) => {
+  const ua = req.headers["user-agent"] || "";
+
+  if (isBot(ua)) {
+    try {
+      const fullURL = req.protocol + "://" + req.get("host") + req.originalUrl;
+      console.log("🤖 Rendering SSR for bot:", fullURL);
+
+      const html = await renderPage(fullURL);
+      return res.send(html);
+
+    } catch (err) {
+      console.error("❌ SSR Rendering Error:", err);
+      return next();
+    }
+  }
+
+  next();
 });
 
-// MongoDB connection
+// API Root Test
+app.get("/", (req, res) => {
+  res.send("Backend Live with SSR Enabled");
+});
+
+// MongoDB Connection
 mongoose.connect(process.env.MONGO_URI, {
   dbName: '3xBooksClone',
   useNewUrlParser: true,
@@ -48,8 +97,7 @@ app.use('/api/authors', require('./routes/authors'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/series', require('./routes/series'));
 
-
-// ✅ Contact form endpoint (instant response)
+// ===== CONTACT FORM =====
 app.post('/api/contact', (req, res) => {
   const { name, email, phone, subject, message } = req.body;
 
@@ -60,7 +108,6 @@ app.post('/api/contact', (req, res) => {
   // Respond immediately
   res.status(200).json({ message: 'Email sent successfully' });
 
-  // Send email in the background
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT, 10),
@@ -74,7 +121,6 @@ app.post('/api/contact', (req, res) => {
   const mailOptions = {
     from: `Aspire Developer`,
     to: `${process.env.CONTACT_RECEIVER}, ${process.env.CONTACT_RECEIVER1}, ${process.env.CONTACT_RECEIVER2}`,
-    // to: `${process.env.CONTACT_RECEIVER}, ${process.env.CONTACT_RECEIVER2}`,
     subject: 'New Contact Form Submission',
     html: `
       <h3>Contact Form Details</h3>
@@ -87,12 +133,11 @@ app.post('/api/contact', (req, res) => {
   };
 
   transporter.sendMail(mailOptions)
-    .then(() => console.log(`✅ Contact form email sent from ${email}`))
+    .then(() => console.log(`📧 Contact email sent from ${email}`))
     .catch(err => console.error('❌ Contact form email error:', err));
 });
 
-
-// ✅ Newsletter form endpoint (instant response)
+// ===== NEWSLETTER =====
 app.post('/api/newsletter', (req, res) => {
   const { email } = req.body;
 
@@ -100,10 +145,8 @@ app.post('/api/newsletter', (req, res) => {
     return res.status(400).json({ error: 'Please fill all required fields' });
   }
 
-  // Respond immediately
   res.status(200).json({ message: 'Email sent successfully' });
 
-  // Send email in background
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT, 10),
@@ -117,15 +160,12 @@ app.post('/api/newsletter', (req, res) => {
   const mailOptions = {
     from: `"Newsletter Subscriber" <${process.env.SMTP_USER}>`,
     to: `${process.env.CONTACT_RECEIVER}, ${process.env.CONTACT_RECEIVER1}, ${process.env.CONTACT_RECEIVER2}`,
-    subject: 'New Newsletter Form Submission',
-    html: `
-      <h3>Newsletter Form Details</h3>
-      <p><strong>Email:</strong> ${email}</p>
-    `,
+    subject: 'New Newsletter Subscription',
+    html: `<h3>Email:</h3><p>${email}</p>`
   };
 
   transporter.sendMail(mailOptions)
-    .then(() => console.log(`✅ Newsletter email sent from ${email}`))
+    .then(() => console.log(`📧 Newsletter email sent from ${email}`))
     .catch(err => console.error('❌ Newsletter email error:', err));
 });
 
