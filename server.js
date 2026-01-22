@@ -12,7 +12,8 @@ const app = express();
 const allowedOrigins = [
   'https://www.bookssstore.com',
   'http://localhost:3000',
-  'http://192.168.20.186:3000'
+  'http://192.168.20.186:3000',
+  '*',
 ];
 
 app.use(cors({
