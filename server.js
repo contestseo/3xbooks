@@ -10,12 +10,9 @@ const path = require('path');
 const app = express();
 
 const allowedOrigins = [
-  'https://3xbooks.com',
-  'https://www.3xbooks.com',
+  'https://www.bookssstore.com',
   'http://localhost:3000',
-  'http://192.168.20.186:3000',
-  'https://3xbooks-next-seven.vercel.app',
-  'https://exbooks.onrender.com'
+  'http://192.168.20.186:3000'
 ];
 
 app.use(cors({
